@@ -168,9 +168,6 @@ namespace MediaBrowser.Providers.MediaInfo
 
             if (audio is AudioBook audioBook)
             {
-<<<<<<< ours
-                var libraryOptions = _libraryManager.GetLibraryOptions(audio);
-=======
                 await SaveAudioBookChaptersAsync(audioBook, mediaInfo, cancellationToken).ConfigureAwait(false);
             }
         }
@@ -178,49 +175,49 @@ namespace MediaBrowser.Providers.MediaInfo
         internal async Task SaveAudioBookChaptersAsync(AudioBook audioBook, Model.MediaInfo.MediaInfo mediaInfo, CancellationToken cancellationToken)
         {
             var libraryOptions = _libraryManager.GetLibraryOptions(audioBook);
->>>>>>> theirs
 
-                if (libraryOptions.PreferCueSidecarForAudiobookChapters)
+            IReadOnlyList<ChapterInfo>? multiPartChapters = null;
+            if (audioBook.AdditionalParts.Length > 0)
+            {
+                var (chapters, totalTicks, partTicks) = await BuildMultiPartChaptersAsync(
+                    audioBook, mediaInfo.RunTimeTicks ?? 0, cancellationToken).ConfigureAwait(false);
+                audioBook.RunTimeTicks = totalTicks;
+                audioBook.PartRunTimeTicks = partTicks;
+                multiPartChapters = chapters;
+            }
+
+            if (libraryOptions.PreferCueSidecarForAudiobookChapters)
+            {
+                var cueChapters = AudioBookCueChapterParser.ParseCueSidecar(audioBook.Path);
+                if (cueChapters.Count > 0)
                 {
-                    var cueChapters = AudioBookCueChapterParser.ParseCueSidecar(audio.Path);
-                    if (cueChapters.Count > 0)
-                    {
-                        _chapterManager.SaveChapters(audio, cueChapters);
-                    }
-                    else if (audioBook.AdditionalParts.Length > 0)
-                    {
-                        var (chapters, totalTicks, partTicks) = await BuildMultiPartChaptersAsync(
-                            audioBook, mediaInfo.RunTimeTicks ?? 0, cancellationToken).ConfigureAwait(false);
-                        audio.RunTimeTicks = totalTicks;
-                        audioBook.PartRunTimeTicks = partTicks;
-                        _chapterManager.SaveChapters(audio, chapters);
-                    }
-                    else if (mediaInfo.Chapters is { Length: > 0 })
-                    {
-                        _chapterManager.SaveChapters(audio, mediaInfo.Chapters);
-                    }
+                    _chapterManager.SaveChapters(audioBook, cueChapters);
+                }
+                else if (multiPartChapters is not null)
+                {
+                    _chapterManager.SaveChapters(audioBook, multiPartChapters);
+                }
+                else if (mediaInfo.Chapters is { Length: > 0 })
+                {
+                    _chapterManager.SaveChapters(audioBook, mediaInfo.Chapters);
+                }
+            }
+            else
+            {
+                if (mediaInfo.Chapters is { Length: > 0 })
+                {
+                    _chapterManager.SaveChapters(audioBook, mediaInfo.Chapters);
+                }
+                else if (multiPartChapters is not null)
+                {
+                    _chapterManager.SaveChapters(audioBook, multiPartChapters);
                 }
                 else
                 {
-                    if (mediaInfo.Chapters is { Length: > 0 })
+                    var cueChapters = AudioBookCueChapterParser.ParseCueSidecar(audioBook.Path);
+                    if (cueChapters.Count > 0)
                     {
-                        _chapterManager.SaveChapters(audio, mediaInfo.Chapters);
-                    }
-                    else if (audioBook.AdditionalParts.Length > 0)
-                    {
-                        var (chapters, totalTicks, partTicks) = await BuildMultiPartChaptersAsync(
-                            audioBook, mediaInfo.RunTimeTicks ?? 0, cancellationToken).ConfigureAwait(false);
-                        audio.RunTimeTicks = totalTicks;
-                        audioBook.PartRunTimeTicks = partTicks;
-                        _chapterManager.SaveChapters(audio, chapters);
-                    }
-                    else
-                    {
-                        var cueChapters = AudioBookCueChapterParser.ParseCueSidecar(audio.Path);
-                        if (cueChapters.Count > 0)
-                        {
-                            _chapterManager.SaveChapters(audio, cueChapters);
-                        }
+                        _chapterManager.SaveChapters(audioBook, cueChapters);
                     }
                 }
             }
@@ -755,7 +752,7 @@ namespace MediaBrowser.Providers.MediaInfo
 
             var firstChapter = new ChapterInfo
             {
-                Name = Path.GetFileNameWithoutExtension(audioBook.Path),
+                Name = StripLeadingTrackNumber(Path.GetFileNameWithoutExtension(audioBook.Path)),
                 StartPositionTicks = 0
             };
             TrySetChapterImage(audioBook, firstChapter, audioBook.Path);
@@ -782,7 +779,7 @@ namespace MediaBrowser.Providers.MediaInfo
 
                 var chapter = new ChapterInfo
                 {
-                    Name = Path.GetFileNameWithoutExtension(partPath),
+                    Name = StripLeadingTrackNumber(Path.GetFileNameWithoutExtension(partPath)),
                     StartPositionTicks = cumulativeTicks
                 };
                 TrySetChapterImage(audioBook, chapter, partPath);
@@ -794,8 +791,6 @@ namespace MediaBrowser.Providers.MediaInfo
             return (chapters, cumulativeTicks, partTicks.ToArray());
         }
 
-<<<<<<< ours
-=======
         internal static string StripLeadingTrackNumber(string name)
         {
             var digitsEnd = 0;
@@ -824,7 +819,6 @@ namespace MediaBrowser.Providers.MediaInfo
             return stripped.Length > 0 ? stripped : name;
         }
 
->>>>>>> theirs
         private void TrySetChapterImage(AudioBook audioBook, ChapterInfo chapter, string filePath)
         {
             try

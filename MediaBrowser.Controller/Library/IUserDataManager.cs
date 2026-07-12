@@ -96,8 +96,10 @@ namespace MediaBrowser.Controller.Library
         /// <param name="item">Item to update.</param>
         /// <param name="data">Data to update.</param>
         /// <param name="reportedPositionTicks">New playstate.</param>
+        /// <param name="user">The user, used to recover the committed position from the database when the cached value is stale.</param>
+        /// <param name="wasStopped">Whether this update was triggered by a playback stop; a bare zero on stop is treated as spurious for audiobooks.</param>
         /// <returns>True if playstate was updated.</returns>
-        bool UpdatePlayState(BaseItem item, UserItemData data, long? reportedPositionTicks);
+        bool UpdatePlayState(BaseItem item, UserItemData data, long? reportedPositionTicks, User? user = null, bool wasStopped = false);
 
         /// <summary>
         /// Clears any stored audio and subtitle stream selections for the given user/item pair.

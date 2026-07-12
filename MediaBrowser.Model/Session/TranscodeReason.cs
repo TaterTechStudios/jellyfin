@@ -34,6 +34,7 @@ namespace MediaBrowser.Model.Session
         AudioProfileNotSupported = 1 << 15,
         AudioSampleRateNotSupported = 1 << 16,
         AudioBitDepthNotSupported = 1 << 17,
+        AudioPlaybackRateRequested = 1 << 28,
 
         // Bitrate Constraints
         ContainerBitrateExceedsLimit = 1 << 18,

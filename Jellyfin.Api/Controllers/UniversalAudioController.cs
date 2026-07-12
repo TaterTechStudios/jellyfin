@@ -186,6 +186,7 @@ public class UniversalAudioController : BaseJellyfinApiController
         if (audioPlaybackRate.HasValue && Math.Abs(audioPlaybackRate.Value - 1.0) > 0.001)
         {
             isStatic = false;
+            mediaSource.TranscodeReasons |= TranscodeReason.AudioPlaybackRateRequested;
         }
 
         if (!isStatic && mediaSource.TranscodingSubProtocol == MediaStreamProtocol.hls)
